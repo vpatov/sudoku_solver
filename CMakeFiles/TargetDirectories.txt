@@ -1,0 +1,3 @@
+/Users/vas/repos/sudoku_solver/CMakeFiles/rebuild_cache.dir
+/Users/vas/repos/sudoku_solver/CMakeFiles/edit_cache.dir
+/Users/vas/repos/sudoku_solver/CMakeFiles/sudoku_solver.dir
