@@ -1,0 +1,167 @@
+        /*
+            while (!stack.empty()){
+
+                
+                // get to a cell
+                // place all of its candidates on the stack.
+                // i.e. if candidates for cell 0,0 are 1,2,3 then the stack is:
+                // (0,0,1) (0,0,2) (0,0,3)
+                // then to try assignment, just pop off the stack
+
+                i,j,symbol = stack.top() // (0,0,3)
+
+                perform_assign(i,j,symbol);
+
+                // iterate over row, col, 3x3 of (0,0), and remove bit 3 from candidate_mask
+                bool failure = !recalculate_affected_candidates(i,j,symbol); 
+
+                if (failure){
+                    undo_assign(i,j,symbol);
+                }
+                (for int x= i; x < gridSize; x++){
+                    for (int y = j; y < gridSize; y++){
+                        candidate = find_first_candidate[x][y];
+                        stack.push_back(x,y,candidate)
+                        try_assign(x,y,candidate)
+                        failure = calculate_candidates;
+                        if (failure){
+                            undo_assign(x,y,candidate);
+                            remove_candidate(x,y,candidate);
+                            stack.pop();
+                        }
+
+                        // if there's no failure, you keep iterating and assigning
+                        // in a perfect world, the first candidate of each cell would
+                        // be the correct one.
+
+
+                        goto leaveloop;
+                    }
+                }
+                #leaveloop:
+            }
+
+
+            try once_more
+
+            while(!to_visit_queue.empty() && unassigned_cells){
+
+                i,j = cell on top of stack (or first_empty_cell during init)
+                for candidate in candidates[i][j]:
+                    to_visit_stack.push_back((i,j,candidate))
+
+                x,y,candidate = to_visit_queue.pop()
+                try_assign(x,y,candidate)
+                bool success = update_candidates(x,y,candidate)
+                if (!success){
+                    undo_update_candidate(x,y,candidate)
+                    remove_candidate(x,y,candidate)
+                }
+                else {
+                    visited_stack.push_back(x,y,candidate)
+                }
+            }
+
+
+            try once_more
+
+
+            initialize stack to (i,j,value of [i][j-1] to "backtrack")
+            while(!to_visit_queue.empty() && unassigned_cells){
+
+                // we only need to pop off the stack if we fail. Otherwise, we
+                // go to the next empty cell and take the first candidate.
+                // when we pop off the stack, we remove that candidate,
+                // and take the next available candidate. if there is no next available
+                // candidate for the current cell, we pop off the stack and go to that cell.
+
+
+                i,j, candidate = pop off stack
+                undo_candidate
+
+
+
+                    
+
+                x,y,candidate = to_visit_queue.pop()
+                try_assign(x,y,candidate)
+                bool success = update_candidates(x,y,candidate)
+                if (!success){
+                    undo_update_candidate(x,y,candidate)
+                    remove_candidate(x,y,candidate)
+                }
+                else {
+                    visited_stack.push_back(x,y,candidate)
+                }
+            }
+
+
+
+            candidate = find_first_candidate[x][y];
+            stack.push_back(x,y,candidate)
+            try_assign(x,y,candidate)
+            failure = calculate_candidates;
+            if (failure){
+                undo_assign(x,y,candidate);
+                remove_candidate(x,y,candidate);
+                stack.pop();
+            }
+
+
+            cell = first empty cell
+            find next assignment for cell
+
+            assign
+            check for failure
+
+            no_failure:
+                stack.push(cell,assignment)
+                go to next unassigned cell
+                assign
+                check for failure
+
+                no_failure:
+                    stack.push(cell,assignment)
+                    go to next unassigned cell
+                    assign
+                    ...
+
+                failure:
+                    find next assignment for cell
+                    if next assignment exists:
+                        assign
+                        check for failure
+
+                        no_failure:
+                            stack.push(cell,assignment)
+                            go to next unassigned cell
+                            assign
+                            check for failure
+                        
+                        failure:
+                            find next assignment for cell
+                            ...
+                    
+                    else: 
+                        cell location, last assignment = pop stack
+                        find next assignment for cell
+
+
+
+
+            failure:
+                find next assignment for cell
+                if next assignment exists:
+                    assign
+                    check for failure
+
+                    no_failure:
+                        go to next unassigned cell
+                        assign
+                    
+                    failure:
+                        find next assignment for cell
+                else:
+                    cell location, last assignment = pop stack
+                    find next assignment for cell
+        */
