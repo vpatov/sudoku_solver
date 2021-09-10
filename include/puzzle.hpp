@@ -123,9 +123,23 @@ public:
         }
     }
 
+    // returns the largest symbol from the candidate mask
     char get_first_symbol_from_mask(uint16_t candidate_mask)
     {
         return '0' + (uint16_bits - std::__countl_zero(candidate_mask));
+    }
+
+    char get_next_symbol_from_mask(uint16_t candidate_mask, char prev_symbol)
+    {
+        if (prev_symbol == '0')
+        {
+            return get_first_symbol_from_mask(candidate_mask);
+        }
+        // if prev symbol is set, return the next smallest symbol.
+        // zero out all the other symbols
+        size_t bit_shift = prev_symbol - '0';
+        uint16_t mask = 0xFFFF >> ((uint16_bits - bit_shift) + 1);
+        return get_first_symbol_from_mask(mask & candidate_mask);
     }
 
     uint8_t assign_simple_candidates()
@@ -355,21 +369,30 @@ public:
         }
     }
 
+    void print_candidates(int i, int j)
+    {
+        for (int s = 0; s < 9; s++)
+        {
+            if ((1UL << s) & m_candidates[i][j])
+            {
+                std::cout << (s + 1) << " ";
+            }
+        }
+        std::cout << std::endl;
+    }
+
     void print_all_candidates()
     {
         for (int i = 0; i < gridSize; i++)
         {
             for (int j = 0; j < gridSize; j++)
             {
-                std::cout << "(" << i << ", " << j << "): ";
-                for (int s = 0; s < 9; s++)
+                if (m_candidates[i][j] == 0)
                 {
-                    if ((1UL << s) & m_candidates[i][j])
-                    {
-                        std::cout << (s + 1) << " ";
-                    }
+                    continue;
                 }
-                std::cout << std::endl;
+                std::cout << "(" << i << ", " << j << "): ";
+                print_candidates(i, j);
             }
         }
     }
@@ -429,12 +452,22 @@ public:
     {
         std::vector<std::tuple<size_t, size_t, char>> stack;
 
+        // print_board();
         // find next unassigned cell
-        int row = 0;
-        int col = 0;
-        for (; row < gridSize; row++)
+        int row;
+        int col;
+        int ox;
+        int oy;
+        int popped_i;
+        int popped_j;
+        char popped_symbol = '0';
+        char prev_symbol;
+        bool failure;
+    find_first_unassigned_cell:;
+
+        for (row = 0; row < gridSize; row++)
         {
-            for (; col < gridSize; col++)
+            for (col = 0; col < gridSize; col++)
             {
                 if (m_board[row][col] == '0')
                 {
@@ -442,13 +475,56 @@ public:
                 }
             }
         }
+        std::cout << Color::green << "BACKPROP SUCCESS!!" << Color::endl;
+        print_board();
+        return;
     found_first_unassigned_cell:;
 
-        char symbol = get_first_symbol_from_mask(m_candidates[row][col]);
+        // if we just failed, then we popped a cell and unassigned it.
+        // that cell should always be the first unassigned cell.
+        if (failure)
+        {
+            assert(popped_i == row && popped_j == col);
+        }
+        char symbol = get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
+        // char symbol = get_first_symbol_from_mask(m_candidates[row][col]);
         uint16_t symbol_mask = get_symbol_mask(symbol);
-        stack.push_back(std::tuple(row, col, symbol));
 
-        bool failure = false;
+        if (m_candidates[row][col] == 0 || symbol == '0')
+        {
+            std::cout
+                << std::endl
+                << Color::purple
+                << "Going to failure because first unassigned cell at "
+                << row << ", " << col << " has no candidates."
+                << Color::endl;
+            goto failure_label;
+        }
+
+        m_board[row][col] = symbol;
+
+        // problem is with this line. when we make an assignment, we permanently remove that candidate
+        // from the set for that cell. However, when backprop fails, and we pop up to a previous config,
+        // we may well have to try the same candidate again for this cell.
+        // i.e.
+        // 1, (3|5), (5|7)
+        // 1, 5, 7 -> fail
+        // 1, 3, !! cant assign 7 because it was removed from candidates
+        // removing the candidate was convenient because it made iterating over the candidates easier.
+        // this problem can be solved with another matrix that keeps track
+        // m_candidates[row][col] &= ~symbol_mask;
+
+        if (row > 9 || col > 9 || symbol == '0')
+        {
+            std::cout << "breakpoint" << std::endl;
+        }
+        stack.push_back(std::tuple(row, col, symbol));
+        std::cout << std::endl
+                  << Color::yellow << "(" << stack.size() << ") pushing: " << row << ", " << col << ", " << symbol << Color::endl;
+        // std::cout << "1,3 candidates: ";
+        // print_candidates(1, 3);
+        failure = false;
+        popped_symbol = '0';
 
         // - update backprop candidates with info that we are removing this candidate
         // - remove the just-assigned symbol from candidates of unassigned neighbors
@@ -457,13 +533,23 @@ public:
         // row
         for (int j = 0; j < gridSize; j++)
         {
-            if (m_candidates[row][j] & symbol_mask)
+            if (m_board[row][j] == '0' && (m_candidates[row][j] & symbol_mask))
             {
-                m_backprop_candidates[row][j].insert(row * gridSize + j);
+                std::cout << "Removing candidate "
+                          << symbol << " from " << row << ", " << j << std::endl;
+                std::cout << "Inserting "
+                          << (row * gridSize) + j << " into m_backprop at "
+                          << row << ", " << col << std::endl;
+                m_backprop_candidates[row][col].insert((row * gridSize) + j);
+
                 m_candidates[row][j] &= ~symbol_mask;
 
                 if (m_candidates[row][j] == 0)
                 {
+                    std::cout
+                        << Color::teal << "Encountered failure at " << row << ", " << j
+                        << Color::endl;
+
                     failure = true;
                 }
             }
@@ -471,33 +557,61 @@ public:
         // col
         for (int i = 0; i < gridSize; i++)
         {
-            if (m_candidates[i][col] & symbol_mask)
+            if (m_board[i][col] == '0' && (m_candidates[i][col] & symbol_mask))
             {
-                m_backprop_candidates[i][col].insert(i * gridSize + col);
+                std::cout << "Removing candidate " << symbol << " from " << i << ", " << col << std::endl;
+                std::cout << "Inserting "
+                          << (i * gridSize) + col << " into m_backprop at "
+                          << row << ", " << col << std::endl;
+                m_backprop_candidates[row][col].insert((i * gridSize) + col);
                 m_candidates[i][col] &= ~symbol_mask;
 
                 if (m_candidates[i][col] == 0)
                 {
+                    std::cout << Color::teal << "Encountered failure at " << i << ", " << col << Color::endl;
                     failure = true;
                 }
             }
         }
 
         // 3x3 square
-        int ox = (row / squareSize) * squareSize;
-        int oy = (col / squareSize) * squareSize;
+        ox = (row / squareSize) * squareSize;
+        oy = (col / squareSize) * squareSize;
         for (int i = ox; i < ox + squareSize; i++)
         {
             for (int j = oy; j < oy + squareSize; j++)
             {
-                if (m_candidates[i][j] & symbol_mask)
+                if (m_board[i][j] == '0' && (m_candidates[i][j] & symbol_mask))
                 {
-                    m_backprop_candidates[i][j].insert((i * gridSize) + j);
+                    m_backprop_candidates[row][col].insert((i * gridSize) + j);
+                    std::cout << "Removing candidate " << symbol << " from " << i << ", " << j << std::endl;
+                    std::cout << "Inserting "
+                              << (i * gridSize) + j << " into m_backprop at "
+                              << row << ", " << col << std::endl;
                     m_candidates[i][j] &= ~symbol_mask;
 
                     if (m_candidates[i][j] == 0)
                     {
+                        std::cout << Color::teal << "Encountered failure at " << i << ", " << j << Color::endl;
                         failure = true;
+                    }
+                }
+            }
+        }
+
+        // debugging sanity check for failure
+        if (!failure)
+        {
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    if (m_board[i][j] == '0' && m_candidates[i][j] == 0)
+                    {
+                        failure = true;
+                        std::cout << Color::white
+                                  << "relying on sanity check to set failure at " << i << ", " << j
+                                  << Color::endl;
                     }
                 }
             }
@@ -505,26 +619,45 @@ public:
 
         if (failure)
         {
-            // pop from stack to get row, col, symbol
-            // assert that m_board[row][col] == symbol
-            // unassign symbol from m_board[row][col]
-            // look at m_backprop[row][col] to see which cells need to have symbol re-added to their candidates
-            // for set_bit in m_backprop[row][col]:
-            //      cell = get_cell_from_m_backprop_bitset_bit(set_bit)
-            //
+        failure_label:;
+
+            std::cout << Color::red << std::endl
+                      << "failure. stack size: " << stack.size() << Color::endl;
+            assert(stack.size());
             auto tup = stack.back();
+
             stack.pop_back();
-            int i = std::get<0>(tup);
-            int j = std::get<1>(tup);
-            char symbol = std::get<2>(tup);
+            popped_i = std::get<0>(tup);
+            popped_j = std::get<1>(tup);
+            popped_symbol = std::get<2>(tup);
+            uint16_t symbol_mask = get_symbol_mask(popped_symbol);
+            std::cout << "popped: " << popped_i << ", " << popped_j << ", " << popped_symbol << std::endl;
 
-            assert(m_board[i][j] == symbol);
-            m_board[i][j] = '0';
-
-            for (auto bit : m_backprop_candidates[i][j])
+            if (popped_i == 1 && popped_j == 3)
             {
+                std::cout << "breakpoint" << std::endl;
             }
+            assert(popped_symbol != '0');
+            assert(m_board[popped_i][popped_j] == popped_symbol);
+            m_board[popped_i][popped_j] = '0';
+
+            for (auto index : m_backprop_candidates[popped_i][popped_j])
+            {
+                int row = index / gridSize;
+                int col = index % gridSize;
+
+                // only restore the candidates if it is not the failed cell.
+                // The failed cell needs to keep that candidate removed, so
+                // we dont try it again, since it didnt work out.
+                if (row != popped_i || col != popped_j)
+                {
+                    std::cout << "Restoring " << popped_symbol << " to candidates of " << row << ", " << col << std::endl;
+                    m_candidates[row][col] |= symbol_mask;
+                }
+            }
+            m_backprop_candidates[popped_i][popped_j].clear();
         }
+        goto find_first_unassigned_cell;
     }
 
     void print_board();

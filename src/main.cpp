@@ -15,6 +15,31 @@ const char *puzzle3_str =
 const char *puzzle4_str =
     "063000008908500000000070000000004500830050090009610000050030460000000000200100030";
 
+const char *almost_solved_str =
+    "084007000257183649613000827000715496745000208196428700000541962420000080561892074";
+
+/*
+-------------------------------------
+|     8   4 | 0       7 |           |
+
+| 2   5   7 | 1   8   3 | 6   4   9 |
+
+| 6   1   3 |           | 8   2   7 |
+-------------------------------------
+|           | 7   1   5 | 4   9   6 |
+
+| 7   4   5 |           | 2       8 |
+
+| 1   9   6 | 4   2   8 | 7         |
+-------------------------------------
+|           | 5   4   1 | 9   6   2 |
+
+| 4   2     |           |     8     |
+
+| 5   6   1 | 8   9   2 |     7   4 |
+-------------------------------------
+*/
+
 void foo()
 {
     int a = std::__countl_zero((uint16_t)0b11001001100);
@@ -34,24 +59,8 @@ void foo()
     std::cout << zzz << std::endl;
 }
 
-int main()
+void try_to_solve_logically(Puzzle puzzle)
 {
-    // foo();
-
-    std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
-    std::cout << Color::purple << "By Vasia Patov" << Color::endl;
-    std::cout << Color::blue << "Solving..." << Color::endl;
-
-    Puzzle puzzle(puzzle3_str);
-
-    // puzzle.print_board();
-
-    // puzzle.initialize_helper_vars();
-    // puzzle.initialize_candidate_map();
-
-    /*
-    puzzle.print_board();
-
     int prev_unassigned_cells = Puzzle::gridSize * Puzzle::gridSize;
     while (true)
 
@@ -70,9 +79,24 @@ int main()
         prev_unassigned_cells = unassigned_cells;
         std::cout << (uint16_t)unassigned_cells << std::endl;
     }
+}
 
-    puzzle.calculate_all_candidates();
+int main()
+{
+    // foo();
+
+    std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
+    std::cout << Color::purple << "By Vasia Patov" << Color::endl;
+    std::cout << Color::blue << "Solving..." << Color::endl;
+
+    Puzzle puzzle(puzzle4_str);
+
+    // puzzle.print_board();
+    // try_to_solve_logically();
 
     puzzle.print_board();
-    */
+    puzzle.calculate_all_candidates();
+    puzzle.print_all_candidates();
+
+    puzzle.backprop();
 }
