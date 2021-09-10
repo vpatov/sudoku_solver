@@ -9,8 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SOURCES
     src/puzzle.cpp
     src/main.cpp
+    src/bitmask.cpp
+    src/util.cpp
     include/colors.hpp
     include/puzzle.hpp
+    include/bitmask.hpp
+    include/util.hpp
 )
 
 

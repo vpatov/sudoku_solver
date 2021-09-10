@@ -30,21 +30,6 @@ void Puzzle::print_board()
     }
 }
 
-void Puzzle::initialize_helper_vars()
-{
-    for (int i = 0; i < gridSize; i++)
-    {
-        for (int j = 0; j < gridSize; j++)
-        {
-            if (m_board[i][j] != '0')
-            {
-                symbols_in_rows[i].insert(m_board[i][j]);
-                symbols_in_cols[j].insert(m_board[i][j]);
-            }
-        }
-    }
-}
-
 // returns false if a cell is found to be unassigned and to have no options.
 // means that backprop reached a dead end.
 // do we need the board[i][j] == 0 check?
@@ -61,7 +46,7 @@ bool Puzzle::calculate_candidates(size_t i, size_t j)
                 if (m_board[x][y] != '0')
                 {
                     // unset the ith bit for the ith symbol
-                    m_candidates[i][j] &= ~(get_symbol_mask(m_board[x][y]));
+                    m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][y]));
                 }
             }
         }
@@ -75,7 +60,7 @@ bool Puzzle::calculate_candidates(size_t i, size_t j)
         {
             if (m_board[i][y] != '0')
             {
-                m_candidates[i][j] &= ~(get_symbol_mask(m_board[i][y]));
+                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[i][y]));
             }
         }
         if (m_candidates[i][j] == 0)
@@ -88,7 +73,7 @@ bool Puzzle::calculate_candidates(size_t i, size_t j)
         {
             if (m_board[x][j] != '0')
             {
-                m_candidates[i][j] &= ~(get_symbol_mask(m_board[x][j]));
+                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][j]));
             }
         }
         if (m_candidates[i][j] == 0)

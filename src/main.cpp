@@ -18,46 +18,8 @@ const char *puzzle4_str =
 const char *almost_solved_str =
     "084007000257183649613000827000715496745000208196428700000541962420000080561892074";
 
-/*
--------------------------------------
-|     8   4 | 0       7 |           |
-
-| 2   5   7 | 1   8   3 | 6   4   9 |
-
-| 6   1   3 |           | 8   2   7 |
--------------------------------------
-|           | 7   1   5 | 4   9   6 |
-
-| 7   4   5 |           | 2       8 |
-
-| 1   9   6 | 4   2   8 | 7         |
--------------------------------------
-|           | 5   4   1 | 9   6   2 |
-
-| 4   2     |           |     8     |
-
-| 5   6   1 | 8   9   2 |     7   4 |
--------------------------------------
-*/
-
-void foo()
-{
-    int a = std::__countl_zero((uint16_t)0b11001001100);
-    int b = std::__countl_zero((uint32_t)0b01100100);
-    int c = std::__countl_zero((uint16_t)0b101111000100000);
-    int d = std::__countl_zero((uint32_t)0b1101100000);
-    int e = std::__countl_zero((uint16_t)0b1001100100000);
-    int f = std::__countl_zero((uint32_t)0b00110000);
-    int g = std::__countl_zero((uint16_t)0b01100000);
-    int h = std::__countl_zero((uint32_t)0b100101100000);
-    int i = std::__countl_zero((uint16_t)0b10100000);
-    int j = std::__countl_zero((uint32_t)0b01100100);
-    int k = std::__countl_zero((uint16_t)0b1100001110100000);
-    int l = std::__countl_zero((uint32_t)0b1100101100000);
-
-    int zzz = a + b + c + d + e + f + g + h + i + j + k + l;
-    std::cout << zzz << std::endl;
-}
+const char *puzzle5_str =
+    "002030008000008000031020000060050270010000050204060031000080605000000013005310400";
 
 void try_to_solve_logically(Puzzle puzzle)
 {
@@ -83,13 +45,12 @@ void try_to_solve_logically(Puzzle puzzle)
 
 int main()
 {
-    // foo();
 
     std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
     std::cout << Color::purple << "By Vasia Patov" << Color::endl;
     std::cout << Color::blue << "Solving..." << Color::endl;
 
-    Puzzle puzzle(puzzle4_str);
+    Puzzle puzzle(puzzle5_str);
 
     // puzzle.print_board();
     // try_to_solve_logically();
@@ -98,5 +59,9 @@ int main()
     puzzle.calculate_all_candidates();
     puzzle.print_all_candidates();
 
-    puzzle.backprop();
+    // std::cout << puzzle.get_product_of_candidates() << std::endl;
+    ScientificNotation num_possible_permutations = puzzle.num_possible_permutations();
+    std::cout << num_possible_permutations << std::endl;
+
+    // puzzle.backprop();
 }

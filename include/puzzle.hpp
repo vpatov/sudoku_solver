@@ -10,6 +10,8 @@
 #include <tuple>
 #include <bitset>
 #include <assert.h>
+#include "bitmask.hpp"
+#include "util.hpp"
 
 class Puzzle
 {
@@ -17,8 +19,6 @@ public:
     const static int gridSize = 9;
     const static int numSymbols = 9;
     const static int squareSize = 3;
-    const static size_t uint16_bits = std::numeric_limits<uint16_t>::digits;
-    const static size_t uint32_bits = std::numeric_limits<uint32_t>::digits;
 
 private:
     // m_board is the sudoku grid. unassigned cells are '0', assigned cells are '1'.
@@ -30,37 +30,12 @@ private:
     // if m_candidates[i][j] == 0 && m_board[i][j] == '0', then we have reached a conflict during backprop
     uint16_t m_candidates[gridSize][gridSize] = {0};
 
-    // m_backprop_candidates[i][j] contains the a bitset, with the ith bit
-    // representing the ith index as having had the symbol s (from m_board[i][j]) removed from the
-    // candidates at m_candidates[i][j]
-    // indeces 0..8 for the row, 9..17 for the col, 18..27 for the 3x3 square
-    // std::bitset<uint32_bits> m_backprop_candidates2[gridSize][gridSize] = {0};
-
-    // std::bitset<gridSize * gridSize> m_backprop_candidates3[gridSize][gridSize] = {0};
-
     std::unordered_set<size_t> m_backprop_candidates[gridSize][gridSize];
 
     const static std::string borderColor;
     const static std::string symbolColor;
 
-    // maps numbers to the cells that they could possibly be in
-    std::unordered_set<size_t> candidate_cells[numSymbols];
-
-    // numbers_in_rows[0] = contains the set of numbers present in the 1st row
-    std::unordered_set<char> symbols_in_rows[gridSize];
-    std::unordered_set<char> symbols_in_cols[gridSize];
-
 public:
-    Puzzle(char board[gridSize][gridSize])
-    {
-        memcpy(m_board, board, sizeof(m_board));
-    }
-
-    Puzzle(char **board)
-    {
-        memcpy(m_board, board, sizeof(m_board));
-    }
-
     Puzzle(const char *board)
     {
         memcpy(m_board, board, sizeof(m_board));
@@ -82,8 +57,6 @@ public:
         cout << Color::endl;
     }
 
-    void initialize_helper_vars();
-
     bool calculate_candidates(size_t i, size_t j);
 
     void calculate_all_candidates()
@@ -101,47 +74,6 @@ public:
         remove_some_candidates();
     }
 
-    void initialize_candidate_map()
-    {
-        for (int i = 0; i < gridSize; i++)
-        {
-            for (int j = 0; j < gridSize; j++)
-            {
-                for (char c = '1'; c <= '9'; c++)
-                {
-                    if (m_board[i][j] != '0')
-                    {
-                        continue;
-                    }
-                    if (symbols_in_rows[i].find(c) == symbols_in_rows[i].end() &&
-                        symbols_in_cols[j].find(c) == symbols_in_cols[j].end())
-                    {
-                        candidate_cells[c - '1'].insert((i * gridSize) + j);
-                    }
-                }
-            }
-        }
-    }
-
-    // returns the largest symbol from the candidate mask
-    char get_first_symbol_from_mask(uint16_t candidate_mask)
-    {
-        return '0' + (uint16_bits - std::__countl_zero(candidate_mask));
-    }
-
-    char get_next_symbol_from_mask(uint16_t candidate_mask, char prev_symbol)
-    {
-        if (prev_symbol == '0')
-        {
-            return get_first_symbol_from_mask(candidate_mask);
-        }
-        // if prev symbol is set, return the next smallest symbol.
-        // zero out all the other symbols
-        size_t bit_shift = prev_symbol - '0';
-        uint16_t mask = 0xFFFF >> ((uint16_bits - bit_shift) + 1);
-        return get_first_symbol_from_mask(mask & candidate_mask);
-    }
-
     uint8_t assign_simple_candidates()
     {
         uint8_t unassigned_cells = 0;
@@ -152,7 +84,7 @@ public:
                 uint8_t popcount = std::__popcount(m_candidates[i][j]);
                 if (popcount == 1)
                 {
-                    char symbol = '0' + (uint16_bits - std::__countl_zero(m_candidates[i][j]));
+                    char symbol = bitmask::get_first_symbol_from_mask(m_candidates[i][j]);
                     m_board[i][j] = symbol;
                     m_candidates[i][j] = 0;
                 }
@@ -164,11 +96,6 @@ public:
             }
         }
         return unassigned_cells;
-    }
-
-    uint16_t get_symbol_mask(char symbol)
-    {
-        return 1UL << (symbol - '1');
     }
 
     size_t count_unassigned_cells()
@@ -201,7 +128,7 @@ public:
                 for (int j = 0; j < gridSize; j++)
                 {
 
-                    if (m_candidates[i][j] & get_symbol_mask(symbol))
+                    if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
                     {
                         cell_count++;
                         candidate_column = j;
@@ -226,7 +153,7 @@ public:
                 int candidate_row = 0;
                 for (int i = 0; i < gridSize; i++)
                 {
-                    if (m_candidates[i][j] & get_symbol_mask(symbol))
+                    if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
                     {
                         cell_count++;
                         candidate_row = i;
@@ -258,7 +185,7 @@ public:
                     for (int j = y; j < y + squareSize; j++)
                     {
 
-                        if (m_candidates[i][j] & get_symbol_mask(symbol))
+                        if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
                         {
                             cell_count++;
                             candidate_row = i;
@@ -293,11 +220,6 @@ public:
         }
 
         //check square
-        // 6, 0 -> 6
-        // 8, 3 -> 7
-        // 4, 5 -> 4
-        // uint16_t offset = ((x / squareSize) * squareSize) + (y / 3);
-
         int ox = (x / squareSize) * squareSize;
         int oy = (y / squareSize) * squareSize;
 
@@ -327,7 +249,7 @@ public:
             for (char symbol = '1'; symbol <= '9'; symbol++)
             {
                 size_t symbol_index = symbol - '1';
-                uint16_t symbol_mask = get_symbol_mask(symbol);
+                uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
                 for (int i = x; i < x + squareSize; i++)
                 {
                     for (int j = y; j < y + squareSize; j++)
@@ -397,63 +319,71 @@ public:
         }
     }
 
-    // find first empty cell, try taking one of candidates, and assigning it.
-    // keep track of how you are changing the state during assignment of
-    // m_board
-    // m_candidates
-
-    void forward_state(int i, int j, char symbol)
+    /*
+        Calculate the total amount of possible assignments (legal and illegal) for a given puzzle.
+        Equivalent to the product of the number of candidates per cell.
+    */
+    ScientificNotation num_possible_permutations()
     {
+        // scientific notation
+        ScientificNotation sn;
+
+        for (int i = 0; i < gridSize; i++)
+        {
+            for (int j = 0; j < gridSize; j++)
+            {
+                int num_candidates_cell = 0;
+                if (m_candidates[i][j] == 0)
+                {
+                    continue;
+                }
+                for (int s = 0; s < 9; s++)
+                {
+                    if ((1UL << s) & m_candidates[i][j])
+                    {
+                        num_candidates_cell++;
+                    }
+                }
+                sn *= num_candidates_cell;
+            }
+        }
+        return sn;
     }
 
-    // Idea: candidates for a cell only ever decrease in cardinality as you move closer towards in solution
-    // Therefore, a possible optimization for calculate_all_candidates would be to only iterate over
-    // the symbols that are in the existing candidates, and see which ones need to be removed because
-    // they are no longer legal (after new assignments are tried).
-    // Question: should the whole candidates array be iterated over with this rule? i.e.
-    // for row in candidates:
-    //      for candidate in row:
-    //          if candidate != 0:
-    //              for set_bit in candidate:
-    //                  # check row, col, and square for candidate
-    // or, is it sufficient to only iterate
-
-    // takes the first possible entry for m_board[i][j] from candidates and assigns it,
-    // and removes it from the candidates.
-    // Do other candidates need to be updated? (yes)
-    bool try_assign(int i, int j)
+    std::string get_product_of_candidates()
     {
-        // uint16_t candidate_bits = m_candidates[i][j];
-        // while (candidate_bits)
-        // {
-        //     char symbol = get_first_symbol_from_mask(candidate_bits);
-        //     candidate_bits &= ~get_symbol_mask(symbol);
-        //     try_assign(i, j)
-        // }
+        int num_non_empty_candidates = 0;
+        int total_num_candidates = 0;
+        std::string acc;
+        for (int i = 0; i < gridSize; i++)
+        {
+            for (int j = 0; j < gridSize; j++)
+            {
+                int num_candidates_cell = 0;
+                if (m_candidates[i][j] == 0)
+                {
+                    continue;
+                }
+                for (int s = 0; s < 9; s++)
+                {
+                    if ((1UL << s) & m_candidates[i][j])
+                    {
+                        num_candidates_cell++;
+                        total_num_candidates++;
+                    }
+                }
+                num_non_empty_candidates++;
+                acc += std::to_string(num_candidates_cell) + "*";
+            }
+        }
+        acc += "1";
 
-        char symbol = get_first_symbol_from_mask(m_candidates[i][j]);
-        m_candidates[i][j] &= ~get_symbol_mask(symbol); // isn't necessary if we call calculate_all_candidates
-        m_board[i][j] = symbol;
-        calculate_candidates_for_constraint_zone(i, j);
-        calculate_all_candidates();
-        return symbol;
+        return acc;
     }
 
-    void undo_assign(int i, int j)
-    {
-        // m_board[i][j] = 0;
-        // m_candidates[i][j] &= get_symbol_mask(symbol);
-        // calculate_all_candidates();
-    }
-
-    // need to do this not recursively
+    // would be nice to rewrite this without gotos?
     void backprop()
-
     {
-        std::vector<std::tuple<size_t, size_t, char>> stack;
-
-        // print_board();
-        // find next unassigned cell
         int row;
         int col;
         int ox;
@@ -463,6 +393,19 @@ public:
         char popped_symbol = '0';
         char prev_symbol;
         bool failure;
+        int num_cells_initially_unassigned = count_unassigned_cells();
+        int total_guesses = 0;
+        std::vector<std::tuple<size_t, size_t, char>> stack;
+
+        std::cout
+            << Color::purple << "Starting attempt at back-propogation."
+            << Color::endl;
+        std::cout
+            << Color::yellow << "# unassigned cells: " << num_cells_initially_unassigned
+            << Color::endl
+            << std::endl;
+
+        // find next unassigned cell
     find_first_unassigned_cell:;
 
         for (row = 0; row < gridSize; row++)
@@ -475,8 +418,14 @@ public:
                 }
             }
         }
-        std::cout << Color::green << "BACKPROP SUCCESS!!" << Color::endl;
+        std::cout
+            << Color::green << "BACKPROP SUCCESS!!"
+            << Color::endl;
         print_board();
+        std::cout
+            << Color::green << "Required a total of " << total_guesses << " guesses for "
+            << num_cells_initially_unassigned << " unassigned cells."
+            << Color::endl;
         return;
     found_first_unassigned_cell:;
 
@@ -486,9 +435,9 @@ public:
         {
             assert(popped_i == row && popped_j == col);
         }
-        char symbol = get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
+        char symbol = bitmask::get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
         // char symbol = get_first_symbol_from_mask(m_candidates[row][col]);
-        uint16_t symbol_mask = get_symbol_mask(symbol);
+        uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
 
         if (m_candidates[row][col] == 0 || symbol == '0')
         {
@@ -502,6 +451,7 @@ public:
         }
 
         m_board[row][col] = symbol;
+        total_guesses++;
 
         // problem is with this line. when we make an assignment, we permanently remove that candidate
         // from the set for that cell. However, when backprop fails, and we pop up to a previous config,
@@ -630,7 +580,7 @@ public:
             popped_i = std::get<0>(tup);
             popped_j = std::get<1>(tup);
             popped_symbol = std::get<2>(tup);
-            uint16_t symbol_mask = get_symbol_mask(popped_symbol);
+            uint16_t symbol_mask = bitmask::get_symbol_mask(popped_symbol);
             std::cout << "popped: " << popped_i << ", " << popped_j << ", " << popped_symbol << std::endl;
 
             if (popped_i == 1 && popped_j == 3)
