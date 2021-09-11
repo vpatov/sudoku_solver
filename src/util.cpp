@@ -1,3 +1,4 @@
+#include "puzzle.hpp"
 #include "util.hpp"
 #include <iomanip>
 

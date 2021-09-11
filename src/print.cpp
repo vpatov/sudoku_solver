@@ -51,25 +51,30 @@ void Puzzle::print_all_candidates()
 void Puzzle::print_board()
 {
     newline();
-    print_dashes(Color::borderColor, 37);
+    print_dashes(Color::borderColor, num_printout_dashes);
     for (uint8_t i = 0; i < gridSize; i++)
     {
         for (uint8_t j = 0; j < gridSize; j++)
         {
-            std::cout << (j % 3 == 0 ? (Color::borderColor + "| ") : "  ") << Color::end
+            std::cout << (j % squareSize == 0 ? (Color::borderColor + "| ") : "  ") << Color::end
                       << Color::symbolColor << (m_board[i][j] > '0' ? m_board[i][j] : ' ')
                       << Color::end
                       << " ";
         }
 
         std::cout << Color::borderColor << "|" << Color::endl;
-        if ((i + 1) % 3 == 0)
+        if ((i + 1) % squareSize == 0)
         {
-            print_dashes(Color::borderColor, 37);
+            print_dashes(Color::borderColor, num_printout_dashes);
         }
         else
         {
             newline();
         }
     }
+}
+
+std::string Puzzle::get_puzzle_string()
+{
+    return std::string((char *)(m_board), sizeof(m_board));
 }

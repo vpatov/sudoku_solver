@@ -4,12 +4,18 @@
 #include <string>
 #include <unordered_set>
 
+/**
+ * Class that represents a sudoku puzzle. Contains the board representation, as well
+ * as additional structures for book-keeping during solving.
+ * TODO: Generalize implementation to solve arbitrary-sized sudoku puzzles.
+ */
 class Puzzle
 {
 public:
     const static int gridSize = 9;
     const static int numSymbols = 9;
     const static int squareSize = 3;
+    const static int num_printout_dashes = (gridSize * 4) + 1;
 
 private:
     // m_board is the sudoku grid. unassigned cells are '0', assigned cells are '1'-'9'.
@@ -43,6 +49,7 @@ public:
 
 public:
     void print_board();
+    std::string get_puzzle_string();
     ScientificNotation num_possible_permutations();
 
 private:

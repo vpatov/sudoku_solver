@@ -4,7 +4,7 @@
  * Get the index of the symbol w.r.t it's domain. 
  * i.e. '1' -> 0, '2' -> 1, ... '9' -> 8
  */
-uint8_t get_symbol_index(char symbol)
+uint8_t symbol::get_symbol_index(char symbol)
 {
     return symbol - '1';
 }
@@ -26,7 +26,7 @@ uint16_t symbol::get_symbol_mask(char symbol)
  */
 char symbol::get_first_symbol_from_mask(uint16_t candidate_set)
 {
-    return zeroSymbol + (symbol::uint16_bits - std::__countl_zero(candidate_set));
+    return unassigned_symbol + (symbol::uint16_bits - std::__countl_zero(candidate_set));
 }
 
 /**
@@ -34,12 +34,12 @@ char symbol::get_first_symbol_from_mask(uint16_t candidate_set)
  */
 char symbol::get_next_symbol_from_mask(uint16_t candidate_set, char symbol)
 {
-    if (symbol == zeroSymbol)
+    if (symbol == unassigned_symbol)
     {
         return get_first_symbol_from_mask(candidate_set);
     }
     // mask out bits including/higher than symbol
-    size_t num_bits_to_shift = symbol - zeroSymbol;
+    size_t num_bits_to_shift = symbol - unassigned_symbol;
     uint16_t mask = 0xFFFF >> ((symbol::uint16_bits - num_bits_to_shift) + 1);
 
     return get_first_symbol_from_mask(mask & candidate_set);

@@ -7,16 +7,19 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 set(SOURCES
-    src/puzzle.cpp
+    src/backtrack.cpp
+    src/candidates.cpp
+    src/logic.cpp
     src/main.cpp
+    src/print.cpp
+    src/puzzle.cpp
     src/symbol.cpp
     src/util.cpp
-    src/print.cpp
     include/colors.hpp
+    include/print.hpp
     include/puzzle.hpp
     include/symbol.hpp
     include/util.hpp
-    include/print.hpp
 )
 
 if ( CMAKE_COMPILER_IS_GNUCC )

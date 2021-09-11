@@ -62,11 +62,14 @@ int main()
     // puzzle4.backtracking();
 
     Puzzle puzzle5(puzzle5_str);
+    std::cout << puzzle5.get_puzzle_string() << std::endl;
     bool result = puzzle5.backtracking();
     if (result)
     {
         std::cout << Color::green << "Successfully solved puzzle using backtracking." << Color::endl;
     }
+    std::cout << puzzle5.get_puzzle_string() << std::endl;
+    puzzle5.print_board();
 
     // puzzle.print_board();
     // puzzle.calculate_all_candidates();
