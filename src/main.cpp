@@ -21,6 +21,9 @@ const char *almost_solved_str =
 const char *puzzle5_str =
     "002030008000008000031020000060050270010000050204060031000080605000000013005310400";
 
+const char *arto_inkala_puzzle =
+    "005300000800000020070010500400005300010070006003200080060500009004000030000009700";
+
 void try_to_solve_logically(Puzzle puzzle)
 {
     int prev_unassigned_cells = Puzzle::gridSize * Puzzle::gridSize;
@@ -50,10 +53,10 @@ int main()
     std::cout << Color::purple << "By Vasia Patov" << Color::endl;
     std::cout << Color::blue << "Solving..." << Color::endl;
 
-    Puzzle puzzle(puzzle5_str);
+    Puzzle puzzle(arto_inkala_puzzle);
 
     // puzzle.print_board();
-    // try_to_solve_logically();
+    // puzzle.try_to_solve_logically();
 
     puzzle.print_board();
     puzzle.calculate_all_candidates();
@@ -61,7 +64,8 @@ int main()
 
     // std::cout << puzzle.get_product_of_candidates() << std::endl;
     ScientificNotation num_possible_permutations = puzzle.num_possible_permutations();
-    std::cout << num_possible_permutations << std::endl;
 
-    // puzzle.backprop();
+    puzzle.backprop();
+
+    std::cout << num_possible_permutations << std::endl;
 }

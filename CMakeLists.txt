@@ -11,10 +11,12 @@ set(SOURCES
     src/main.cpp
     src/bitmask.cpp
     src/util.cpp
+    src/print.cpp
     include/colors.hpp
     include/puzzle.hpp
     include/bitmask.hpp
     include/util.hpp
+    include/print.hpp
 )
 
 

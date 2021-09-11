@@ -129,6 +129,30 @@ sudoku_solver/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/build
 .PHONY : sudoku_solver/fast
 
+src/bitmask.o: src/bitmask.cpp.o
+.PHONY : src/bitmask.o
+
+# target to build an object file
+src/bitmask.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/bitmask.cpp.o
+.PHONY : src/bitmask.cpp.o
+
+src/bitmask.i: src/bitmask.cpp.i
+.PHONY : src/bitmask.i
+
+# target to preprocess a source file
+src/bitmask.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/bitmask.cpp.i
+.PHONY : src/bitmask.cpp.i
+
+src/bitmask.s: src/bitmask.cpp.s
+.PHONY : src/bitmask.s
+
+# target to generate assembly for a file
+src/bitmask.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/bitmask.cpp.s
+.PHONY : src/bitmask.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -177,6 +201,30 @@ src/puzzle.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/puzzle.cpp.s
 .PHONY : src/puzzle.cpp.s
 
+src/util.o: src/util.cpp.o
+.PHONY : src/util.o
+
+# target to build an object file
+src/util.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/util.cpp.o
+.PHONY : src/util.cpp.o
+
+src/util.i: src/util.cpp.i
+.PHONY : src/util.i
+
+# target to preprocess a source file
+src/util.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/util.cpp.i
+.PHONY : src/util.cpp.i
+
+src/util.s: src/util.cpp.s
+.PHONY : src/util.s
+
+# target to generate assembly for a file
+src/util.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sudoku_solver.dir/build.make CMakeFiles/sudoku_solver.dir/src/util.cpp.s
+.PHONY : src/util.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -186,12 +234,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... sudoku_solver"
+	@echo "... src/bitmask.o"
+	@echo "... src/bitmask.i"
+	@echo "... src/bitmask.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
 	@echo "... src/puzzle.o"
 	@echo "... src/puzzle.i"
 	@echo "... src/puzzle.s"
+	@echo "... src/util.o"
+	@echo "... src/util.i"
+	@echo "... src/util.s"
 .PHONY : help
 
 

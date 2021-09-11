@@ -2,6 +2,9 @@
 #include <iomanip>
 #include <iostream>
 
+/**
+ * Convenience struct for representing numbers in scientific notation. 
+ */
 struct ScientificNotation
 {
     float m;

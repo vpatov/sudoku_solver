@@ -13,6 +13,9 @@ namespace Color
     static const std::string red = "\u001b[31m";
     static const std::string end = "\u001b[0m";
 
+    static const std::string borderColor = Color::green;
+    static const std::string symbolColor = Color::teal;
+
     template <class CharT, class Traits>
     std::basic_ostream<CharT, Traits> &endl(std::basic_ostream<CharT, Traits> &os)
     {

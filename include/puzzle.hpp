@@ -32,9 +32,6 @@ private:
 
     std::unordered_set<size_t> m_backprop_candidates[gridSize][gridSize];
 
-    const static std::string borderColor;
-    const static std::string symbolColor;
-
 public:
     Puzzle(const char *board)
     {
@@ -46,18 +43,7 @@ public:
         memset(m_board, 0, sizeof(m_board));
     }
 
-    void print_dashes(std::string color, int count)
-    {
-        using namespace std;
-        cout << color;
-        for (int i = 0; i < count; i++)
-        {
-            cout << '-';
-        }
-        cout << Color::endl;
-    }
-
-    bool calculate_candidates(size_t i, size_t j);
+    bool calculate_candidates(uint8_t i, uint8_t j);
 
     void calculate_all_candidates()
     {
@@ -114,9 +100,13 @@ public:
         return unassigned_cells;
     }
 
-    // see if in a row set, a column set, or square set, there is only cell that could have a particular symbol
-    // assign it if so
-    void assign_other_candidates1()
+    /**
+     * For every symbol, count the amount of unassigned cells in a constraint 
+     * zone (row, column, or 3x3 square), that could possibly have that symbol.
+     * If for some constraint zone there is only one cell that can have a certain
+     * symbol, then we can assign it to that cell.
+     */
+    void find_and_assign_singular_candidates()
     {
         for (char symbol = '1'; symbol <= '9'; symbol++)
         {
@@ -127,7 +117,7 @@ public:
                 int candidate_column = 0;
                 for (int j = 0; j < gridSize; j++)
                 {
-
+                    // if the symbol is a candidate for this cell, increase the count of cells found
                     if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
                     {
                         cell_count++;
@@ -136,14 +126,12 @@ public:
                 }
 
                 // if we found only one cell that can have this symbol, assign it.
-                // problem with this is that, candidates are not up to date.
                 if (cell_count == 1)
                 {
                     m_board[i][candidate_column] = symbol;
                     m_candidates[i][candidate_column] = 0;
                 }
             }
-            // need to update candidates now
             calculate_all_candidates();
 
             // check cols
@@ -169,9 +157,7 @@ public:
             }
             calculate_all_candidates();
 
-            //    check squares
-            /*
-            */
+            // check every 3x3 square
             for (int offset = 0; offset < gridSize; offset++)
             {
                 int x = (offset / squareSize) * squareSize;
@@ -203,8 +189,12 @@ public:
         }
     }
 
-    // Calculates candidates for all of the cells in the row, column, or 3x3 square
-    // of cell (i,j).
+    void remove_symbol_from_candidates_in_constraint_zones(uint8_t i, uint8_t j, char symbol);
+
+    /**
+     * Calculates candidates for all of the cells in the row, column, or 3x3 square
+     * of cell (i,j).
+     */
     void calculate_candidates_for_constraint_zone(int x, int y)
     {
         // check row
@@ -213,13 +203,13 @@ public:
             calculate_candidates(x, j);
         }
 
-        //check col
+        // check col
         for (int i = 0; i < gridSize; i++)
         {
             calculate_candidates(i, y);
         }
 
-        //check square
+        // check square
         int ox = (x / squareSize) * squareSize;
         int oy = (y / squareSize) * squareSize;
 
@@ -319,36 +309,7 @@ public:
         }
     }
 
-    /*
-        Calculate the total amount of possible assignments (legal and illegal) for a given puzzle.
-        Equivalent to the product of the number of candidates per cell.
-    */
-    ScientificNotation num_possible_permutations()
-    {
-        // scientific notation
-        ScientificNotation sn;
-
-        for (int i = 0; i < gridSize; i++)
-        {
-            for (int j = 0; j < gridSize; j++)
-            {
-                int num_candidates_cell = 0;
-                if (m_candidates[i][j] == 0)
-                {
-                    continue;
-                }
-                for (int s = 0; s < 9; s++)
-                {
-                    if ((1UL << s) & m_candidates[i][j])
-                    {
-                        num_candidates_cell++;
-                    }
-                }
-                sn *= num_candidates_cell;
-            }
-        }
-        return sn;
-    }
+    ScientificNotation num_possible_permutations();
 
     std::string get_product_of_candidates()
     {
