@@ -438,14 +438,6 @@ bool Puzzle::backtracking()
     int total_guesses = 0;
     std::vector<std::tuple<size_t, size_t, char>> stack;
 
-    std::cout
-        << Color::purple << "Starting attempt at back-propogation."
-        << Color::endl;
-    std::cout
-        << Color::yellow << "# unassigned cells: " << num_cells_initially_unassigned
-        << Color::endl
-        << std::endl;
-
     calculate_all_candidates();
 
     // find next unassigned cell
@@ -461,14 +453,7 @@ find_first_unassigned_cell:;
             }
         }
     }
-    std::cout
-        << Color::green << "BACKPROP SUCCESS!!"
-        << Color::endl;
-    print_board();
-    std::cout
-        << Color::green << "Required a total of " << total_guesses << " guesses for "
-        << num_cells_initially_unassigned << " unassigned cells."
-        << Color::endl;
+    // If no unassigned cells are found, means that the puzzle is solved.
     return true;
 found_first_unassigned_cell:;
 
@@ -478,18 +463,13 @@ found_first_unassigned_cell:;
     {
         assert(popped_i == row && popped_j == col);
     }
+
     char symbol = symbol::get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
     // char symbol = get_first_symbol_from_mask(m_candidates[row][col]);
     uint16_t symbol_mask = symbol::get_symbol_mask(symbol);
 
     if (m_candidates[row][col] == 0 || symbol == symbol::zeroSymbol)
     {
-        std::cout
-            << std::endl
-            << Color::purple
-            << "Going to failure because first unassigned cell at "
-            << row << ", " << col << " has no candidates."
-            << Color::endl;
         goto failure_label;
     }
 
@@ -497,9 +477,6 @@ found_first_unassigned_cell:;
     total_guesses++;
 
     stack.push_back(std::tuple(row, col, symbol));
-    std::cout << std::endl
-              << Color::yellow << "(" << stack.size() << ") pushing: " << row << ", " << col << ", " << symbol << Color::endl;
-
     failure = false;
     popped_symbol = symbol::zeroSymbol;
 
@@ -512,21 +489,12 @@ found_first_unassigned_cell:;
     {
         if (m_board[row][j] == symbol::zeroSymbol && (m_candidates[row][j] & symbol_mask))
         {
-            std::cout << "Removing candidate "
-                      << symbol << " from " << row << ", " << j << std::endl;
-            std::cout << "Inserting "
-                      << (row * gridSize) + j << " into m_backprop at "
-                      << row << ", " << col << std::endl;
             m_backtrack_candidates_removed[row][col].insert((row * gridSize) + j);
 
             m_candidates[row][j] &= ~symbol_mask;
 
             if (m_candidates[row][j] == 0)
             {
-                std::cout
-                    << Color::teal << "Encountered failure at " << row << ", " << j
-                    << Color::endl;
-
                 failure = true;
             }
         }
@@ -536,16 +504,11 @@ found_first_unassigned_cell:;
     {
         if (m_board[i][col] == symbol::zeroSymbol && (m_candidates[i][col] & symbol_mask))
         {
-            std::cout << "Removing candidate " << symbol << " from " << i << ", " << col << std::endl;
-            std::cout << "Inserting "
-                      << (i * gridSize) + col << " into m_backprop at "
-                      << row << ", " << col << std::endl;
             m_backtrack_candidates_removed[row][col].insert((i * gridSize) + col);
             m_candidates[i][col] &= ~symbol_mask;
 
             if (m_candidates[i][col] == 0)
             {
-                std::cout << Color::teal << "Encountered failure at " << i << ", " << col << Color::endl;
                 failure = true;
             }
         }
@@ -561,15 +524,10 @@ found_first_unassigned_cell:;
             if (m_board[i][j] == symbol::zeroSymbol && (m_candidates[i][j] & symbol_mask))
             {
                 m_backtrack_candidates_removed[row][col].insert((i * gridSize) + j);
-                std::cout << "Removing candidate " << symbol << " from " << i << ", " << j << std::endl;
-                std::cout << "Inserting "
-                          << (i * gridSize) + j << " into m_backprop at "
-                          << row << ", " << col << std::endl;
                 m_candidates[i][j] &= ~symbol_mask;
 
                 if (m_candidates[i][j] == 0)
                 {
-                    std::cout << Color::teal << "Encountered failure at " << i << ", " << j << Color::endl;
                     failure = true;
                 }
             }
@@ -586,9 +544,6 @@ found_first_unassigned_cell:;
                 if (m_board[i][j] == symbol::zeroSymbol && m_candidates[i][j] == 0)
                 {
                     failure = true;
-                    std::cout << Color::white
-                              << "relying on sanity check to set failure at " << i << ", " << j
-                              << Color::endl;
                 }
             }
         }
@@ -597,9 +552,6 @@ found_first_unassigned_cell:;
     if (failure)
     {
     failure_label:;
-
-        std::cout << Color::red << std::endl
-                  << "failure. stack size: " << stack.size() << Color::endl;
         if (!stack.size())
         {
             return false;
@@ -611,12 +563,7 @@ found_first_unassigned_cell:;
         popped_j = std::get<1>(tup);
         popped_symbol = std::get<2>(tup);
         uint16_t symbol_mask = symbol::get_symbol_mask(popped_symbol);
-        std::cout << "popped: " << popped_i << ", " << popped_j << ", " << popped_symbol << std::endl;
 
-        if (popped_i == 1 && popped_j == 3)
-        {
-            std::cout << "breakpoint" << std::endl;
-        }
         assert(popped_symbol != symbol::zeroSymbol);
         assert(m_board[popped_i][popped_j] == popped_symbol);
         m_board[popped_i][popped_j] = symbol::zeroSymbol;
@@ -631,7 +578,6 @@ found_first_unassigned_cell:;
             // we dont try it again, since it didnt work out.
             if (row != popped_i || col != popped_j)
             {
-                std::cout << "Restoring " << popped_symbol << " to candidates of " << row << ", " << col << std::endl;
                 m_candidates[row][col] |= symbol_mask;
             }
         }
