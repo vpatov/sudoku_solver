@@ -3,35 +3,12 @@
 #include "print.hpp"
 #include <iomanip>
 
-/*
-    Prints the board, with colors.
-*/
-void Puzzle::print_board()
-{
-    newline();
-    print_dashes(Color::borderColor, 37);
-    for (uint8_t i = 0; i < gridSize; i++)
-    {
-        for (uint8_t j = 0; j < gridSize; j++)
-        {
-            std::cout << (j % 3 == 0 ? (Color::borderColor + "| ") : "  ") << Color::end
-                      << Color::symbolColor << (m_board[i][j] > '0' ? m_board[i][j] : ' ')
-                      << Color::end
-                      << " ";
-        }
-
-        std::cout << Color::borderColor << "|" << Color::endl;
-        if ((i + 1) % 3 == 0)
-        {
-            print_dashes(Color::borderColor, 37);
-        }
-        else
-        {
-            newline();
-        }
-    }
-}
-
+/**
+ * Assumes that @arg{symbol} was just assigned to the cell at @arg{row}, @arg{col}, and removes 
+ * the symbol from the constraint zones that that cell is in. calculate_all_candidates would have
+ * the same effect, but this function is more efficient because it does much less work for the same
+ * result.
+ */
 void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint8_t col, char symbol)
 {
     uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
@@ -125,9 +102,9 @@ void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
     }
 }
 
-/*
-    Calculate the total amount of possible assignments (legal and illegal) for a given puzzle.
-    Equivalent to the product of the number of candidates per cell.
+/**
+ * Calculate the total amount of possible assignments (legal and illegal) for a given puzzle.
+ * Equivalent to the product of the number of candidates per cell.
 */
 ScientificNotation Puzzle::num_possible_permutations()
 {
@@ -156,19 +133,51 @@ ScientificNotation Puzzle::num_possible_permutations()
     return sn;
 }
 
-// You can guarantee that number X goes into cell[i][j] if there is
-// no other place in the square that X can go, or no other place
-// in the row/column that X can go.
-// returns true if the puzzle is solved
+/**
+ * Calculates candidates for cells, and assigns symbols to cells where it is 
+ * possible to logically determine a single candidate. Returns the amount of cells
+ * that are left unassigned after a round of assignment attempts.
+ * Some easier puzzles can be solved by calling this function in a loop.
+ */
 uint8_t Puzzle::iter_solve_puzzle()
 {
     calculate_all_candidates();
     assign_simple_candidates();
-    calculate_all_candidates();
-    find_and_assign_singular_candidates();
+    find_and_assign_exclusive_candidates();
     return count_unassigned_cells();
 }
 
+/**
+ * Calls iter_solve_puzzle in a loop, and checks the amount of unassigned cells remaining  
+ * after each iteration. If the amount is found to no longer be changing, then the
+ * logic rules implemented (thus far) are insufficient to solve the current puzzle.
+ * If there are no unassigned cells left, the puzzle is solved. 
+ * 
+ * @returns true when the puzzle is solved, false when it cannot be solved using 
+ * the currently implemented logic rules.
+ */
+bool Puzzle::try_to_solve_logically()
+{
+    int prev_unassigned_cells = gridSize * gridSize;
+    while (true)
+    {
+        uint8_t unassigned_cells = iter_solve_puzzle();
+        if (unassigned_cells == 0)
+        {
+            return true;
+        }
+        if (unassigned_cells == prev_unassigned_cells)
+        {
+            return false;
+        }
+        prev_unassigned_cells = unassigned_cells;
+    }
+}
+
+/**
+ * Iterates over the board and initializes + calculates candidates for each cell,
+ * based on what symbols a row, column, or square are missing.
+ */
 void Puzzle::calculate_all_candidates()
 {
     for (int i = 0; i < gridSize; i++)
@@ -181,9 +190,12 @@ void Puzzle::calculate_all_candidates()
             calculate_candidates(i, j);
         }
     }
-    remove_some_candidates();
+    narrow_down_candidates();
 }
 
+/**
+ * Assigns symbols to cells that only have one possible candidate.
+ */
 void Puzzle::assign_simple_candidates()
 {
     for (int i = 0; i < gridSize; i++)
@@ -196,11 +208,15 @@ void Puzzle::assign_simple_candidates()
                 char symbol = bitmask::get_first_symbol_from_mask(m_candidates[i][j]);
                 m_board[i][j] = symbol;
                 m_candidates[i][j] = 0;
+                remove_symbol_from_candidates_in_constraint_zones(i, j, symbol);
             }
         }
     }
 }
 
+/**
+ * Returns the number of cells that do not have a symbol assigned to them yet.
+ */
 size_t Puzzle::count_unassigned_cells()
 {
     size_t unassigned_cells = 0;
@@ -223,7 +239,7 @@ size_t Puzzle::count_unassigned_cells()
  * If for some constraint zone there is only one cell that can have a certain
  * symbol, then we can assign it to that cell.
  */
-void Puzzle::find_and_assign_singular_candidates()
+void Puzzle::find_and_assign_exclusive_candidates()
 {
     for (char symbol = '1'; symbol <= '9'; symbol++)
     {
@@ -308,9 +324,9 @@ void Puzzle::find_and_assign_singular_candidates()
 }
 
 /**
-     * Calculates candidates for all of the cells in the row, column, or 3x3 square
-     * of cell (i,j).
-     */
+ * Calculates candidates for all of the cells in the row, column, or 3x3 square
+ * of cell (i,j).
+ */
 void Puzzle::calculate_candidates_for_constraint_zone(int x, int y)
 {
     // check row
@@ -338,9 +354,11 @@ void Puzzle::calculate_candidates_for_constraint_zone(int x, int y)
     }
 }
 
-// for a 3x3 square, if a symbol is only a candidate for cells in one row/column, then we
-// can remove that symbol from any candidate sets for that row/column in other squares.
-void Puzzle::remove_some_candidates()
+/**
+ * For a 3x3 square, if a symbol is only a candidate for cells in one row/column, then we
+ * can remove that symbol from any candidate sets for that row/column in other squares.
+ */
+void Puzzle::narrow_down_candidates()
 {
 
     for (int offset = 0; offset < gridSize; offset++)
@@ -397,7 +415,7 @@ void Puzzle::remove_some_candidates()
     }
 }
 
-void Puzzle::backprop()
+bool Puzzle::backprop()
 {
     int row;
     int col;
@@ -440,7 +458,7 @@ find_first_unassigned_cell:;
         << Color::green << "Required a total of " << total_guesses << " guesses for "
         << num_cells_initially_unassigned << " unassigned cells."
         << Color::endl;
-    return;
+    return true;
 found_first_unassigned_cell:;
 
     // if we just failed, then we popped a cell and unassigned it.
@@ -467,26 +485,10 @@ found_first_unassigned_cell:;
     m_board[row][col] = symbol;
     total_guesses++;
 
-    // problem is with this line. when we make an assignment, we permanently remove that candidate
-    // from the set for that cell. However, when backprop fails, and we pop up to a previous config,
-    // we may well have to try the same candidate again for this cell.
-    // i.e.
-    // 1, (3|5), (5|7)
-    // 1, 5, 7 -> fail
-    // 1, 3, !! cant assign 7 because it was removed from candidates
-    // removing the candidate was convenient because it made iterating over the candidates easier.
-    // this problem can be solved with another matrix that keeps track
-    // m_candidates[row][col] &= ~symbol_mask;
-
-    if (row > 9 || col > 9 || symbol == '0')
-    {
-        std::cout << "breakpoint" << std::endl;
-    }
     stack.push_back(std::tuple(row, col, symbol));
     std::cout << std::endl
               << Color::yellow << "(" << stack.size() << ") pushing: " << row << ", " << col << ", " << symbol << Color::endl;
-    // std::cout << "1,3 candidates: ";
-    // print_candidates(1, 3);
+
     failure = false;
     popped_symbol = '0';
 
@@ -587,7 +589,10 @@ found_first_unassigned_cell:;
 
         std::cout << Color::red << std::endl
                   << "failure. stack size: " << stack.size() << Color::endl;
-        assert(stack.size());
+        if (!stack.size())
+        {
+            return false;
+        }
         auto tup = stack.back();
 
         stack.pop_back();

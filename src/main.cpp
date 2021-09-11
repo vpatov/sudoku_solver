@@ -24,48 +24,42 @@ const char *puzzle5_str =
 const char *arto_inkala_puzzle =
     "005300000800000020070010500400005300010070006003200080060500009004000030000009700";
 
-void try_to_solve_logically(Puzzle *puzzle)
+void print_header()
 {
-    int prev_unassigned_cells = Puzzle::gridSize * Puzzle::gridSize;
-    while (true)
-
-    {
-        uint8_t unassigned_cells = puzzle->iter_solve_puzzle();
-        if (unassigned_cells == 0)
-        {
-            std::cout << Color::green << "Solved!!!" << Color::endl;
-            break;
-        }
-        if (unassigned_cells == prev_unassigned_cells)
-        {
-            std::cout << Color::red << "logic implemented is not enough - need to try backprop..." << Color::endl;
-            break;
-        }
-        prev_unassigned_cells = unassigned_cells;
-    }
+    std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
+    std::cout << Color::purple << "By Vasia Patov" << Color::endl;
 }
 
 int main()
 {
+    bool results[4];
+    size_t index = 0;
 
-    // try to force compiler warning
-    // int foo[30];
-    // char boo = 5;
-    // std::cout << foo[boo] << std::endl;
-    ///
-
-    std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
-    std::cout << Color::purple << "By Vasia Patov" << Color::endl;
-    std::cout << Color::blue << "Solving..." << Color::endl;
+    print_header();
 
     Puzzle puzzle1(puzzle1_str);
-    try_to_solve_logically(&puzzle1);
+    results[index++] = puzzle1.try_to_solve_logically();
 
     Puzzle puzzle2(puzzle2_str);
-    try_to_solve_logically(&puzzle2);
+    results[index++] = puzzle2.try_to_solve_logically();
 
     Puzzle puzzle3(puzzle3_str);
-    try_to_solve_logically(&puzzle3);
+    results[index++] = puzzle3.try_to_solve_logically();
+
+    Puzzle puzzle4(puzzle4_str);
+    results[index++] = puzzle4.try_to_solve_logically();
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (results[i])
+        {
+            std::cout << Color::green << "Solved puzzle " << i << " using logic rules." << Color::endl;
+        }
+        else
+        {
+            std::cout << Color::red << "Could not solve puzzle " << i << " using logic rules." << Color::endl;
+        }
+    }
 
     // puzzle.print_board();
     // puzzle.calculate_all_candidates();

@@ -44,3 +44,32 @@ void Puzzle::print_all_candidates()
         }
     }
 }
+
+/**
+ * Prints the board, with colors.
+ */
+void Puzzle::print_board()
+{
+    newline();
+    print_dashes(Color::borderColor, 37);
+    for (uint8_t i = 0; i < gridSize; i++)
+    {
+        for (uint8_t j = 0; j < gridSize; j++)
+        {
+            std::cout << (j % 3 == 0 ? (Color::borderColor + "| ") : "  ") << Color::end
+                      << Color::symbolColor << (m_board[i][j] > '0' ? m_board[i][j] : ' ')
+                      << Color::end
+                      << " ";
+        }
+
+        std::cout << Color::borderColor << "|" << Color::endl;
+        if ((i + 1) % 3 == 0)
+        {
+            print_dashes(Color::borderColor, 37);
+        }
+        else
+        {
+            newline();
+        }
+    }
+}
