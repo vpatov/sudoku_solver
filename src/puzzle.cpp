@@ -1,7 +1,13 @@
-#include "puzzle.hpp"
+#include "symbol.hpp"
 #include "colors.hpp"
 #include "print.hpp"
-#include <iomanip>
+#include "puzzle.hpp"
+#include <assert.h>
+#include <bit>
+#include <bitset>
+#include <iostream>
+#include <tuple>
+#include <vector>
 
 /**
  * Assumes that @arg{symbol} was just assigned to the cell at @arg{row}, @arg{col}, and removes 
@@ -11,11 +17,11 @@
  */
 void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint8_t col, char symbol)
 {
-    uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
+    uint16_t symbol_mask = symbol::get_symbol_mask(symbol);
     // row
     for (uint8_t j = 0; j < gridSize; j++)
     {
-        if (m_board[row][j] == '0' && (m_candidates[row][j] & symbol_mask))
+        if (m_board[row][j] == symbol::zeroSymbol && (m_candidates[row][j] & symbol_mask))
         {
             m_candidates[row][j] &= ~symbol_mask;
         }
@@ -24,7 +30,7 @@ void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint
     // col
     for (uint8_t i = 0; i < gridSize; i++)
     {
-        if (m_board[i][col] == '0' && (m_candidates[i][col] & symbol_mask))
+        if (m_board[i][col] == symbol::zeroSymbol && (m_candidates[i][col] & symbol_mask))
         {
             m_candidates[i][col] &= ~symbol_mask;
         }
@@ -37,7 +43,7 @@ void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint
     {
         for (uint8_t j = oy; j < oy + squareSize; j++)
         {
-            if (m_board[i][j] == '0' && (m_candidates[i][j] & symbol_mask))
+            if (m_board[i][j] == symbol::zeroSymbol && (m_candidates[i][j] & symbol_mask))
             {
                 m_candidates[i][j] &= ~symbol_mask;
             }
@@ -51,7 +57,7 @@ void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint
  */
 void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
 {
-    if (m_board[i][j] != '0')
+    if (m_board[i][j] != symbol::zeroSymbol)
     {
         return;
     }
@@ -63,10 +69,10 @@ void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
     {
         for (int y = ((j / 3) * 3); y < ((j / 3) + 1) * 3; y++)
         {
-            if (m_board[x][y] != '0')
+            if (m_board[x][y] != symbol::zeroSymbol)
             {
                 // unset the ith bit for the ith symbol
-                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][y]));
+                m_candidates[i][j] &= ~(symbol::get_symbol_mask(m_board[x][y]));
             }
         }
     }
@@ -78,9 +84,9 @@ void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
     // check row
     for (int y = 0; y < gridSize; y++)
     {
-        if (m_board[i][y] != '0')
+        if (m_board[i][y] != symbol::zeroSymbol)
         {
-            m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[i][y]));
+            m_candidates[i][j] &= ~(symbol::get_symbol_mask(m_board[i][y]));
         }
     }
     if (m_candidates[i][j] == 0)
@@ -91,9 +97,9 @@ void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
     // check col
     for (int x = 0; x < gridSize; x++)
     {
-        if (m_board[x][j] != '0')
+        if (m_board[x][j] != symbol::zeroSymbol)
         {
-            m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][j]));
+            m_candidates[i][j] &= ~(symbol::get_symbol_mask(m_board[x][j]));
         }
     }
     if (m_candidates[i][j] == 0)
@@ -139,7 +145,7 @@ ScientificNotation Puzzle::num_possible_permutations()
  * that are left unassigned after a round of assignment attempts.
  * Some easier puzzles can be solved by calling this function in a loop.
  */
-uint8_t Puzzle::iter_solve_puzzle()
+uint8_t Puzzle::apply_logic_rules()
 {
     calculate_all_candidates();
     assign_simple_candidates();
@@ -148,7 +154,7 @@ uint8_t Puzzle::iter_solve_puzzle()
 }
 
 /**
- * Calls iter_solve_puzzle in a loop, and checks the amount of unassigned cells remaining  
+ * Calls apply_logic_rules in a loop, and checks the amount of unassigned cells remaining  
  * after each iteration. If the amount is found to no longer be changing, then the
  * logic rules implemented (thus far) are insufficient to solve the current puzzle.
  * If there are no unassigned cells left, the puzzle is solved. 
@@ -161,7 +167,7 @@ bool Puzzle::try_to_solve_logically()
     int prev_unassigned_cells = gridSize * gridSize;
     while (true)
     {
-        uint8_t unassigned_cells = iter_solve_puzzle();
+        uint8_t unassigned_cells = apply_logic_rules();
         if (unassigned_cells == 0)
         {
             return true;
@@ -205,7 +211,7 @@ void Puzzle::assign_simple_candidates()
             uint8_t popcount = std::__popcount(m_candidates[i][j]);
             if (popcount == 1)
             {
-                char symbol = bitmask::get_first_symbol_from_mask(m_candidates[i][j]);
+                char symbol = symbol::get_first_symbol_from_mask(m_candidates[i][j]);
                 m_board[i][j] = symbol;
                 m_candidates[i][j] = 0;
                 remove_symbol_from_candidates_in_constraint_zones(i, j, symbol);
@@ -224,7 +230,7 @@ size_t Puzzle::count_unassigned_cells()
     {
         for (int j = 0; j < gridSize; j++)
         {
-            if (m_board[i][j] == '0')
+            if (m_board[i][j] == symbol::zeroSymbol)
             {
                 unassigned_cells++;
             }
@@ -251,7 +257,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
             for (int j = 0; j < gridSize; j++)
             {
                 // if the symbol is a candidate for this cell, increase the count of cells found
-                if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
+                if (m_candidates[i][j] & symbol::get_symbol_mask(symbol))
                 {
                     cell_count++;
                     candidate_column = j;
@@ -274,7 +280,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
             int candidate_row = 0;
             for (int i = 0; i < gridSize; i++)
             {
-                if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
+                if (m_candidates[i][j] & symbol::get_symbol_mask(symbol))
                 {
                     cell_count++;
                     candidate_row = i;
@@ -304,7 +310,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
                 for (int j = y; j < y + squareSize; j++)
                 {
 
-                    if (m_candidates[i][j] & bitmask::get_symbol_mask(symbol))
+                    if (m_candidates[i][j] & symbol::get_symbol_mask(symbol))
                     {
                         cell_count++;
                         candidate_row = i;
@@ -373,7 +379,7 @@ void Puzzle::narrow_down_candidates()
         for (char symbol = '1'; symbol <= '9'; symbol++)
         {
             size_t symbol_index = symbol - '1';
-            uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
+            uint16_t symbol_mask = symbol::get_symbol_mask(symbol);
             for (int i = x; i < x + squareSize; i++)
             {
                 for (int j = y; j < y + squareSize; j++)
@@ -415,7 +421,10 @@ void Puzzle::narrow_down_candidates()
     }
 }
 
-bool Puzzle::backprop()
+/**
+ * Solves the puzzle using backpropogation.
+ */
+bool Puzzle::backtracking()
 {
     int row;
     int col;
@@ -423,7 +432,7 @@ bool Puzzle::backprop()
     int oy;
     int popped_i;
     int popped_j;
-    char popped_symbol = '0';
+    char popped_symbol = symbol::zeroSymbol;
     bool failure;
     int num_cells_initially_unassigned = count_unassigned_cells();
     int total_guesses = 0;
@@ -437,6 +446,8 @@ bool Puzzle::backprop()
         << Color::endl
         << std::endl;
 
+    calculate_all_candidates();
+
     // find next unassigned cell
 find_first_unassigned_cell:;
 
@@ -444,7 +455,7 @@ find_first_unassigned_cell:;
     {
         for (col = 0; col < gridSize; col++)
         {
-            if (m_board[row][col] == '0')
+            if (m_board[row][col] == symbol::zeroSymbol)
             {
                 goto found_first_unassigned_cell;
             }
@@ -467,11 +478,11 @@ found_first_unassigned_cell:;
     {
         assert(popped_i == row && popped_j == col);
     }
-    char symbol = bitmask::get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
+    char symbol = symbol::get_next_symbol_from_mask(m_candidates[row][col], popped_symbol);
     // char symbol = get_first_symbol_from_mask(m_candidates[row][col]);
-    uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
+    uint16_t symbol_mask = symbol::get_symbol_mask(symbol);
 
-    if (m_candidates[row][col] == 0 || symbol == '0')
+    if (m_candidates[row][col] == 0 || symbol == symbol::zeroSymbol)
     {
         std::cout
             << std::endl
@@ -490,23 +501,23 @@ found_first_unassigned_cell:;
               << Color::yellow << "(" << stack.size() << ") pushing: " << row << ", " << col << ", " << symbol << Color::endl;
 
     failure = false;
-    popped_symbol = '0';
+    popped_symbol = symbol::zeroSymbol;
 
-    // - update backprop candidates with info that we are removing this candidate
+    // - update backtracking candidates with info that we are removing this candidate
     // - remove the just-assigned symbol from candidates of unassigned neighbors
     // - right after removing them, perform the check to make sure there are still candidates
 
     // row
     for (int j = 0; j < gridSize; j++)
     {
-        if (m_board[row][j] == '0' && (m_candidates[row][j] & symbol_mask))
+        if (m_board[row][j] == symbol::zeroSymbol && (m_candidates[row][j] & symbol_mask))
         {
             std::cout << "Removing candidate "
                       << symbol << " from " << row << ", " << j << std::endl;
             std::cout << "Inserting "
                       << (row * gridSize) + j << " into m_backprop at "
                       << row << ", " << col << std::endl;
-            m_backprop_candidates[row][col].insert((row * gridSize) + j);
+            m_backtrack_candidates_removed[row][col].insert((row * gridSize) + j);
 
             m_candidates[row][j] &= ~symbol_mask;
 
@@ -523,13 +534,13 @@ found_first_unassigned_cell:;
     // col
     for (int i = 0; i < gridSize; i++)
     {
-        if (m_board[i][col] == '0' && (m_candidates[i][col] & symbol_mask))
+        if (m_board[i][col] == symbol::zeroSymbol && (m_candidates[i][col] & symbol_mask))
         {
             std::cout << "Removing candidate " << symbol << " from " << i << ", " << col << std::endl;
             std::cout << "Inserting "
                       << (i * gridSize) + col << " into m_backprop at "
                       << row << ", " << col << std::endl;
-            m_backprop_candidates[row][col].insert((i * gridSize) + col);
+            m_backtrack_candidates_removed[row][col].insert((i * gridSize) + col);
             m_candidates[i][col] &= ~symbol_mask;
 
             if (m_candidates[i][col] == 0)
@@ -547,9 +558,9 @@ found_first_unassigned_cell:;
     {
         for (int j = oy; j < oy + squareSize; j++)
         {
-            if (m_board[i][j] == '0' && (m_candidates[i][j] & symbol_mask))
+            if (m_board[i][j] == symbol::zeroSymbol && (m_candidates[i][j] & symbol_mask))
             {
-                m_backprop_candidates[row][col].insert((i * gridSize) + j);
+                m_backtrack_candidates_removed[row][col].insert((i * gridSize) + j);
                 std::cout << "Removing candidate " << symbol << " from " << i << ", " << j << std::endl;
                 std::cout << "Inserting "
                           << (i * gridSize) + j << " into m_backprop at "
@@ -572,7 +583,7 @@ found_first_unassigned_cell:;
         {
             for (int j = 0; j < gridSize; j++)
             {
-                if (m_board[i][j] == '0' && m_candidates[i][j] == 0)
+                if (m_board[i][j] == symbol::zeroSymbol && m_candidates[i][j] == 0)
                 {
                     failure = true;
                     std::cout << Color::white
@@ -599,18 +610,18 @@ found_first_unassigned_cell:;
         popped_i = std::get<0>(tup);
         popped_j = std::get<1>(tup);
         popped_symbol = std::get<2>(tup);
-        uint16_t symbol_mask = bitmask::get_symbol_mask(popped_symbol);
+        uint16_t symbol_mask = symbol::get_symbol_mask(popped_symbol);
         std::cout << "popped: " << popped_i << ", " << popped_j << ", " << popped_symbol << std::endl;
 
         if (popped_i == 1 && popped_j == 3)
         {
             std::cout << "breakpoint" << std::endl;
         }
-        assert(popped_symbol != '0');
+        assert(popped_symbol != symbol::zeroSymbol);
         assert(m_board[popped_i][popped_j] == popped_symbol);
-        m_board[popped_i][popped_j] = '0';
+        m_board[popped_i][popped_j] = symbol::zeroSymbol;
 
-        for (auto index : m_backprop_candidates[popped_i][popped_j])
+        for (auto index : m_backtrack_candidates_removed[popped_i][popped_j])
         {
             int row = index / gridSize;
             int col = index % gridSize;
@@ -624,7 +635,7 @@ found_first_unassigned_cell:;
                 m_candidates[row][col] |= symbol_mask;
             }
         }
-        m_backprop_candidates[popped_i][popped_j].clear();
+        m_backtrack_candidates_removed[popped_i][popped_j].clear();
     }
     goto find_first_unassigned_cell;
 }

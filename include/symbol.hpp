@@ -3,10 +3,10 @@
 #include <bit>
 #include <cstdint>
 
-const static char zeroSymbol = '0';
-
-namespace bitmask
+namespace symbol
 {
+    const char zeroSymbol = '0';
+    const char symbolIndexOffset = '1';
     const size_t uint16_bits = std::numeric_limits<uint16_t>::digits;
     const size_t uint32_bits = std::numeric_limits<uint32_t>::digits;
 

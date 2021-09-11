@@ -1,8 +1,6 @@
 #include "colors.hpp"
 #include "puzzle.hpp"
 #include <iostream>
-#include <memory>
-#include <bitset>
 
 const char *puzzle1_str =
     "904200001200080009600000007000000400000039018100008000378540002420006000060892300";
@@ -32,34 +30,39 @@ void print_header()
 
 int main()
 {
-    bool results[4];
-    size_t index = 0;
+    // bool results[4];
+    // size_t index = 0;
 
-    print_header();
+    // print_header();
 
-    Puzzle puzzle1(puzzle1_str);
-    results[index++] = puzzle1.try_to_solve_logically();
+    // Puzzle puzzle1(puzzle1_str);
+    // results[index++] = puzzle1.try_to_solve_logically();
 
-    Puzzle puzzle2(puzzle2_str);
-    results[index++] = puzzle2.try_to_solve_logically();
+    // Puzzle puzzle2(puzzle2_str);
+    // results[index++] = puzzle2.try_to_solve_logically();
 
-    Puzzle puzzle3(puzzle3_str);
-    results[index++] = puzzle3.try_to_solve_logically();
+    // Puzzle puzzle3(puzzle3_str);
+    // results[index++] = puzzle3.try_to_solve_logically();
 
-    Puzzle puzzle4(puzzle4_str);
-    results[index++] = puzzle4.try_to_solve_logically();
+    // Puzzle puzzle4(puzzle4_str);
+    // results[index++] = puzzle4.try_to_solve_logically();
 
-    for (int i = 0; i < 4; i++)
-    {
-        if (results[i])
-        {
-            std::cout << Color::green << "Solved puzzle " << i << " using logic rules." << Color::endl;
-        }
-        else
-        {
-            std::cout << Color::red << "Could not solve puzzle " << i << " using logic rules." << Color::endl;
-        }
-    }
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     if (results[i])
+    //     {
+    //         std::cout << Color::green << "Solved puzzle " << i << " using logic rules." << Color::endl;
+    //     }
+    //     else
+    //     {
+    //         std::cout << Color::red << "Could not solve puzzle " << i << " using logic rules." << Color::endl;
+    //     }
+    // }
+
+    // puzzle4.backtracking();
+
+    Puzzle puzzle5(puzzle5_str);
+    puzzle5.backtracking();
 
     // puzzle.print_board();
     // puzzle.calculate_all_candidates();
@@ -68,7 +71,7 @@ int main()
     // std::cout << puzzle.get_product_of_candidates() << std::endl;
     // ScientificNotation num_possible_permutations = puzzle.num_possible_permutations();
 
-    // puzzle.backprop();
+    // puzzle.backtracking();
 
     // std::cout << num_possible_permutations << std::endl;
 }

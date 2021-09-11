@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include <iomanip>
 
 std::ostream &operator<<(std::ostream &os, const ScientificNotation &sn)
 {
