@@ -32,62 +32,97 @@ void Puzzle::print_board()
     }
 }
 
-void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t i, uint8_t j, char symbol)
+void Puzzle::remove_symbol_from_candidates_in_constraint_zones(uint8_t row, uint8_t col, char symbol)
 {
+    uint16_t symbol_mask = bitmask::get_symbol_mask(symbol);
+    // row
+    for (uint8_t j = 0; j < gridSize; j++)
+    {
+        if (m_board[row][j] == '0' && (m_candidates[row][j] & symbol_mask))
+        {
+            m_candidates[row][j] &= ~symbol_mask;
+        }
+    }
+
+    // col
+    for (uint8_t i = 0; i < gridSize; i++)
+    {
+        if (m_board[i][col] == '0' && (m_candidates[i][col] & symbol_mask))
+        {
+            m_candidates[i][col] &= ~symbol_mask;
+        }
+    }
+
+    // 3x3 square
+    uint8_t ox = (row / squareSize) * squareSize;
+    uint8_t oy = (col / squareSize) * squareSize;
+    for (uint8_t i = ox; i < ox + squareSize; i++)
+    {
+        for (uint8_t j = oy; j < oy + squareSize; j++)
+        {
+            if (m_board[i][j] == '0' && (m_candidates[i][j] & symbol_mask))
+            {
+                m_candidates[i][j] &= ~symbol_mask;
+            }
+        }
+    }
 }
 
 /**
- * Returns false if a cell is found to be unassigned and to have no candidates.
+ * Updates the candidate set at m_candidates[]i[j].
+ * Returns early if the cell has no more possible candidates.
  */
-bool Puzzle::calculate_candidates(uint8_t i, uint8_t j)
+void Puzzle::calculate_candidates(uint8_t i, uint8_t j)
 {
-    if (m_board[i][j] == '0')
+    if (m_board[i][j] != '0')
     {
-        m_candidates[i][j] = 0b111111111;
-        // check 3x3 square
-        for (int x = ((i / 3) * 3); x < ((i / 3) + 1) * 3; x++)
-        {
-            for (int y = ((j / 3) * 3); y < ((j / 3) + 1) * 3; y++)
-            {
-                if (m_board[x][y] != '0')
-                {
-                    // unset the ith bit for the ith symbol
-                    m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][y]));
-                }
-            }
-        }
-        if (m_candidates[i][j] == 0)
-        {
-            return false;
-        }
+        return;
+    }
 
-        // check row
-        for (int y = 0; y < gridSize; y++)
-        {
-            if (m_board[i][y] != '0')
-            {
-                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[i][y]));
-            }
-        }
-        if (m_candidates[i][j] == 0)
-        {
-            return false;
-        }
+    m_candidates[i][j] = 0b111111111;
 
-        // check col
-        for (int x = 0; x < gridSize; x++)
+    // check 3x3 square
+    for (int x = ((i / 3) * 3); x < ((i / 3) + 1) * 3; x++)
+    {
+        for (int y = ((j / 3) * 3); y < ((j / 3) + 1) * 3; y++)
         {
-            if (m_board[x][j] != '0')
+            if (m_board[x][y] != '0')
             {
-                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][j]));
+                // unset the ith bit for the ith symbol
+                m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][y]));
             }
-        }
-        if (m_candidates[i][j] == 0)
-        {
-            return false;
         }
     }
-    return true;
+    if (m_candidates[i][j] == 0)
+    {
+        return;
+    }
+
+    // check row
+    for (int y = 0; y < gridSize; y++)
+    {
+        if (m_board[i][y] != '0')
+        {
+            m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[i][y]));
+        }
+    }
+    if (m_candidates[i][j] == 0)
+    {
+        return;
+    }
+
+    // check col
+    for (int x = 0; x < gridSize; x++)
+    {
+        if (m_board[x][j] != '0')
+        {
+            m_candidates[i][j] &= ~(bitmask::get_symbol_mask(m_board[x][j]));
+        }
+    }
+    if (m_candidates[i][j] == 0)
+    {
+        return;
+    }
 }
 
 /*
@@ -149,9 +184,8 @@ void Puzzle::calculate_all_candidates()
     remove_some_candidates();
 }
 
-uint8_t Puzzle::assign_simple_candidates()
+void Puzzle::assign_simple_candidates()
 {
-    uint8_t unassigned_cells = 0;
     for (int i = 0; i < gridSize; i++)
     {
         for (int j = 0; j < gridSize; j++)
@@ -163,14 +197,8 @@ uint8_t Puzzle::assign_simple_candidates()
                 m_board[i][j] = symbol;
                 m_candidates[i][j] = 0;
             }
-            // if the popcount is not one or zero, then this means this cell has not been determined yet.
-            else if (popcount != 0)
-            {
-                unassigned_cells++;
-            }
         }
     }
-    return unassigned_cells;
 }
 
 size_t Puzzle::count_unassigned_cells()
@@ -190,12 +218,11 @@ size_t Puzzle::count_unassigned_cells()
 }
 
 /**
-     * For every symbol, count the amount of unassigned cells in a constraint 
-     * zone (row, column, or 3x3 square), that could possibly have that symbol.
-     * If for some constraint zone there is only one cell that can have a certain
-     * symbol, then we can assign it to that cell.
-     */
-// TODO replace calculate_all_Candidates with calcualte_candiates forconstraint zone
+ * For every symbol, count the amount of unassigned cells in a constraint 
+ * zone (row, column, or 3x3 square), that could possibly have that symbol.
+ * If for some constraint zone there is only one cell that can have a certain
+ * symbol, then we can assign it to that cell.
+ */
 void Puzzle::find_and_assign_singular_candidates()
 {
     for (char symbol = '1'; symbol <= '9'; symbol++)
@@ -220,9 +247,9 @@ void Puzzle::find_and_assign_singular_candidates()
             {
                 m_board[i][candidate_column] = symbol;
                 m_candidates[i][candidate_column] = 0;
+                remove_symbol_from_candidates_in_constraint_zones(i, candidate_column, symbol);
             }
         }
-        calculate_all_candidates();
 
         // check cols
         for (int j = 0; j < gridSize; j++)
@@ -243,9 +270,9 @@ void Puzzle::find_and_assign_singular_candidates()
             {
                 m_board[candidate_row][j] = symbol;
                 m_candidates[candidate_row][j] = 0;
+                remove_symbol_from_candidates_in_constraint_zones(candidate_row, j, symbol);
             }
         }
-        calculate_all_candidates();
 
         // check every 3x3 square
         for (int offset = 0; offset < gridSize; offset++)
@@ -274,6 +301,7 @@ void Puzzle::find_and_assign_singular_candidates()
             {
                 m_board[candidate_row][candidate_col] = symbol;
                 m_candidates[candidate_row][candidate_col] = 0;
+                remove_symbol_from_candidates_in_constraint_zones(candidate_row, candidate_col, symbol);
             }
         }
     }
@@ -378,7 +406,6 @@ void Puzzle::backprop()
     int popped_i;
     int popped_j;
     char popped_symbol = '0';
-    char prev_symbol;
     bool failure;
     int num_cells_initially_unassigned = count_unassigned_cells();
     int total_guesses = 0;

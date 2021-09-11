@@ -24,13 +24,13 @@ const char *puzzle5_str =
 const char *arto_inkala_puzzle =
     "005300000800000020070010500400005300010070006003200080060500009004000030000009700";
 
-void try_to_solve_logically(Puzzle puzzle)
+void try_to_solve_logically(Puzzle *puzzle)
 {
     int prev_unassigned_cells = Puzzle::gridSize * Puzzle::gridSize;
     while (true)
 
     {
-        uint8_t unassigned_cells = puzzle.iter_solve_puzzle();
+        uint8_t unassigned_cells = puzzle->iter_solve_puzzle();
         if (unassigned_cells == 0)
         {
             std::cout << Color::green << "Solved!!!" << Color::endl;
@@ -42,30 +42,39 @@ void try_to_solve_logically(Puzzle puzzle)
             break;
         }
         prev_unassigned_cells = unassigned_cells;
-        std::cout << (uint16_t)unassigned_cells << std::endl;
     }
 }
 
 int main()
 {
 
+    // try to force compiler warning
+    // int foo[30];
+    // char boo = 5;
+    // std::cout << foo[boo] << std::endl;
+    ///
+
     std::cout << Color::green << "Sudoku Solver 1.0" << Color::endl;
     std::cout << Color::purple << "By Vasia Patov" << Color::endl;
     std::cout << Color::blue << "Solving..." << Color::endl;
 
-    Puzzle puzzle(arto_inkala_puzzle);
+    Puzzle puzzle1(puzzle1_str);
+    try_to_solve_logically(&puzzle1);
+
+    Puzzle puzzle2(puzzle2_str);
+    try_to_solve_logically(&puzzle2);
+
+    Puzzle puzzle3(puzzle3_str);
+    try_to_solve_logically(&puzzle3);
 
     // puzzle.print_board();
-    // puzzle.try_to_solve_logically();
-
-    puzzle.print_board();
-    puzzle.calculate_all_candidates();
-    puzzle.print_all_candidates();
+    // puzzle.calculate_all_candidates();
+    // puzzle.print_all_candidates();
 
     // std::cout << puzzle.get_product_of_candidates() << std::endl;
-    ScientificNotation num_possible_permutations = puzzle.num_possible_permutations();
+    // ScientificNotation num_possible_permutations = puzzle.num_possible_permutations();
 
-    puzzle.backprop();
+    // puzzle.backprop();
 
-    std::cout << num_possible_permutations << std::endl;
+    // std::cout << num_possible_permutations << std::endl;
 }

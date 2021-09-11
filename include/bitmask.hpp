@@ -3,6 +3,8 @@
 #include <bit>
 #include <cstdint>
 
+const static char zeroSymbol = '0';
+
 namespace bitmask
 {
     const size_t uint16_bits = std::numeric_limits<uint16_t>::digits;

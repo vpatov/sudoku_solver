@@ -23,12 +23,12 @@ public:
 private:
     // m_board is the sudoku grid. unassigned cells are '0', assigned cells are '1'.
     // in retrospect, making these chars was a mistake. they should just be int8_t.
-    char m_board[gridSize][gridSize] = {0};
+    char m_board[gridSize][gridSize] = {};
 
     // m_candidates[i][j] contains a bitset. if the ith bit is set, it means that the symbol i is
     // a possible candidate for cell m_board[i][j].
     // if m_candidates[i][j] == 0 && m_board[i][j] == '0', then we have reached a conflict during backprop
-    uint16_t m_candidates[gridSize][gridSize] = {0};
+    uint16_t m_candidates[gridSize][gridSize] = {};
 
     std::unordered_set<size_t> m_backprop_candidates[gridSize][gridSize];
 
@@ -44,31 +44,23 @@ public:
         memset(m_candidates, 0, sizeof(m_candidates));
     }
 
-    bool calculate_candidates(uint8_t i, uint8_t j);
-
     void print_candidates(uint8_t i, uint8_t j);
-
     void print_all_candidates();
+    void print_board();
 
+    void calculate_candidates(uint8_t i, uint8_t j);
+    void calculate_candidates_for_constraint_zone(int x, int y);
     void calculate_all_candidates();
-
-    uint8_t assign_simple_candidates();
+    void remove_symbol_from_candidates_in_constraint_zones(uint8_t i, uint8_t j, char symbol);
+    void remove_some_candidates();
 
     size_t count_unassigned_cells();
 
-    void find_and_assign_singular_candidates();
-
-    void remove_symbol_from_candidates_in_constraint_zones(uint8_t i, uint8_t j, char symbol);
-
-    void calculate_candidates_for_constraint_zone(int x, int y);
-
-    void remove_some_candidates();
-
     ScientificNotation num_possible_permutations();
 
-    // would be nice to rewrite this without gotos?
+    void assign_simple_candidates();
+    void find_and_assign_singular_candidates();
     void backprop();
 
-    void print_board();
     uint8_t iter_solve_puzzle();
 };
