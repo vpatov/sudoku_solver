@@ -1,6 +1,7 @@
 # Sudoku Solver
 
 To create the makefile, run `cmake .`, and then `make` to build.
+
 usage: `./sudoku_solver [-p puzzle1 puzzle2 ... puzzleN] [-f puzzle_file_path]`
 
 Example:
