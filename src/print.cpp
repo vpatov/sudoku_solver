@@ -50,7 +50,6 @@ void Puzzle::print_all_candidates()
  */
 void Puzzle::print_board()
 {
-    newline();
     print_dashes(Color::borderColor, num_printout_dashes);
     for (uint8_t i = 0; i < gridSize; i++)
     {

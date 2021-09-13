@@ -57,6 +57,7 @@ void Puzzle::assign_simple_candidates()
             {
                 char symbol = symbol::get_first_symbol_from_mask(m_candidates[i][j]);
                 m_board[i][j] = symbol;
+                m_num_logic_assignments++;
                 m_candidates[i][j] = 0;
                 remove_symbol_from_candidates_in_constraint_zones(i, j, symbol);
             }
@@ -93,6 +94,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
             if (cell_count == 1)
             {
                 m_board[i][candidate_column] = symbol;
+                m_num_logic_assignments++;
                 m_candidates[i][candidate_column] = 0;
                 remove_symbol_from_candidates_in_constraint_zones(i, candidate_column, symbol);
             }
@@ -116,6 +118,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
             if (cell_count == 1)
             {
                 m_board[candidate_row][j] = symbol;
+                m_num_logic_assignments++;
                 m_candidates[candidate_row][j] = 0;
                 remove_symbol_from_candidates_in_constraint_zones(candidate_row, j, symbol);
             }
@@ -147,6 +150,7 @@ void Puzzle::find_and_assign_exclusive_candidates()
             if (cell_count == 1)
             {
                 m_board[candidate_row][candidate_col] = symbol;
+                m_num_logic_assignments++;
                 m_candidates[candidate_row][candidate_col] = 0;
                 remove_symbol_from_candidates_in_constraint_zones(candidate_row, candidate_col, symbol);
             }

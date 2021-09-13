@@ -19,7 +19,6 @@ bool Puzzle::backtracking()
     int popped_j;
     char popped_symbol = symbol::unassigned_symbol;
     bool failure;
-    int total_guesses = 0;
     std::vector<std::tuple<size_t, size_t, char>> stack;
 
     calculate_all_candidates();
@@ -58,7 +57,7 @@ found_first_unassigned_cell:;
     }
 
     m_board[row][col] = symbol;
-    total_guesses++;
+    m_num_backtracking_guesses++;
 
     stack.push_back(std::tuple(row, col, symbol));
     failure = false;

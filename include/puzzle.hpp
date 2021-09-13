@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util.hpp"
+#include <regex>
 #include <string>
 #include <unordered_set>
 
@@ -16,8 +17,16 @@ public:
     const static int numSymbols = 9;
     const static int squareSize = 3;
     const static int num_printout_dashes = (gridSize * 4) + 1;
+    const static std::regex puzzle_regex;
+    const static std::string puzzle_regex_str;
 
 private:
+    // The amount of assignments that were made using logical deduction.
+    int m_num_logic_assignments = 0;
+
+    // The total amount of guesses made during backtracking.
+    int m_num_backtracking_guesses = 0;
+
     // m_board is the sudoku grid. unassigned cells are '0', assigned cells are '1'-'9'.
     // in retrospect, making these chars was a mistake. they should just be int8_t.
     char m_board[gridSize][gridSize] = {};
@@ -35,9 +44,9 @@ private:
     std::unordered_set<size_t> m_backtrack_candidates_removed[gridSize][gridSize] = {};
 
 public:
-    Puzzle(const char *board)
+    Puzzle(const char *puzzle_str)
     {
-        memcpy(m_board, board, sizeof(m_board));
+        memcpy(m_board, puzzle_str, sizeof(m_board));
         memset(m_candidates, 0, sizeof(m_candidates));
     }
 
@@ -47,15 +56,32 @@ public:
         memset(m_candidates, 0, sizeof(m_candidates));
     }
 
+    Puzzle(std::string puzzle_str)
+    {
+        memcpy(m_board, puzzle_str.c_str(), sizeof(m_board));
+        memset(m_candidates, 0, sizeof(m_candidates));
+    }
+
+    int get_num_logic_assignments()
+    {
+        return m_num_logic_assignments;
+    }
+
+    int get_num_backtracking_guesses()
+    {
+        return m_num_backtracking_guesses;
+    }
+
 public:
     void print_board();
     std::string get_puzzle_string();
     ScientificNotation num_possible_permutations();
+    size_t count_unassigned_cells();
+    bool is_legal();
 
 private:
     void print_candidates(uint8_t i, uint8_t j);
     void print_all_candidates();
-    size_t count_unassigned_cells();
 
     // NOTE: All of the functions below this line have side effects.
     // Functions for candidate calculation and pruning.
@@ -79,4 +105,9 @@ public:
 
     // Catch-all function that solves any puzzle using good ol' backtracking.
     bool backtracking();
+
+    // Tries to solve it logically, and then tries backtracking.
+    bool solve();
 };
+
+bool process_puzzle(std::string puzzle_str, int count);

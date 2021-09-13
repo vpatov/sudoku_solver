@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 set(SOURCES
+    src/process_args.cpp
     src/backtrack.cpp
     src/candidates.cpp
     src/logic.cpp
@@ -15,6 +16,7 @@ set(SOURCES
     src/puzzle.cpp
     src/symbol.cpp
     src/util.cpp
+    include/process_args.hpp
     include/colors.hpp
     include/print.hpp
     include/puzzle.hpp

@@ -4,7 +4,7 @@
 
 std::ostream &operator<<(std::ostream &os, const ScientificNotation &sn)
 {
-    return os << std::setprecision(2) << sn.m << "e" << sn.exponent;
+    return os << std::setprecision(2) << sn.m << " x 10^" << sn.exponent;
 }
 
 ScientificNotation ScientificNotation::operator*(int operand)
