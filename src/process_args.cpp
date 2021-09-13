@@ -31,9 +31,6 @@ void parse_args(int argc, char *argv[])
 {
     if (argc <= 1)
     {
-        std::cout << Color::green << "Sudoku Solver" << Color::end
-                  << " - "
-                  << Color::teal << "Vasia Patov" << Color::endl;
         print_usage();
         exit(0);
     }
